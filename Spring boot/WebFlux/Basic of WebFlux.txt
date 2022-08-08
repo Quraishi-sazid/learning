@@ -1,0 +1,20 @@
+Non Blocking :
+ Imagine you are in an airport gate and you have to buy a ticket then go to terminal 2. the airport is unknown to you. there are some volunteers to help.
+one volunteer takes you to the ticket counter. he waited for you till you have your ticket. then he takes you to terminal 2.
+	It's the example of typical web call. when you make a request a thread is assigned to your request. when the request processed db connection it waits. after it
+is completed the returns the value and end processing. in the meantime the thread is in a blocking state.
+
+But what if in the airport the volunteer took you in the counter and leaves you to serve another passenger? when you ends up with ticketing you may notify that volunteer
+or another one? then the available volunteer will serve you?
+it is non blocking which is done by webflux in spring boot. the assigned thread leaves as soon as it the request processes db. when the db processing ends, a event 
+is occured and available thread does the job. it is called the event loop.
+When to use:
+ 1. Scalibility needed.
+ 2. Large processing in db.
+ 3. Live streaming(live connection can be done)
+ 4. Backpressure handling.
+Cons
+1.Hard to debug.(Thread switches. can't debug on thread)
+2.coding pattern may seem unfamilier.
+3.end to end reactive needed.(anything in the whole process is blocking leads it to blocking. suppose xyz db system is blocking. then it will be blocking too)
+ 
