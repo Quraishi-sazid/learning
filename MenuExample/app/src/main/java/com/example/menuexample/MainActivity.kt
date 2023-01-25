@@ -7,62 +7,72 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
+import androidx.core.view.MenuItemCompat
+import androidx.core.view.iterator
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MAIN_ACTIVITY";
     var counter = 0
-    var menu:Menu?=null
+    var menu: Menu? = null
     var isOnPrepareOptionsMenuCalledDirectly = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setButtonClick()
-    }
-
-    private fun setButtonClick() {
-        findViewById<Button>(R.id.redraw_menu_item).setOnClickListener {
-            Log.v(TAG, "calling invalidateOptionsMenu")
-            invalidateOptionsMenu()
-        }
-        findViewById<Button>(R.id.call_on_prepare_menu).setOnClickListener {
-            isOnPrepareOptionsMenuCalledDirectly = true
-            onPrepareOptionsMenu(menu)
-            isOnPrepareOptionsMenuCalledDirectly = false
-        }
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        Log.v(TAG,"onPrepareOptionsMenu")
-       if(isOnPrepareOptionsMenuCalledDirectly){
-           menu?.findItem(R.id.dynamically_added_menu_id)?.isVisible = false // editing menu item
-       }
-        return super.onPrepareOptionsMenu(menu)
     }
 
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        Log.v(TAG,"onCreateOptionsMenu")
-        this.menu = menu
-        menuInflater.inflate(R.menu.example_menu,menu)
-        var menuItem = menu?.add(0,R.id.dynamically_added_menu_id,0,"dynamic item" + ++counter)
-        menuItem?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+        menuInflater.inflate(R.menu.example_menu, menu)
+        customizeActionView(menu);
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
-            R.id.menu_item_1->{
-                Toast.makeText(applicationContext,"Menu item 1 pressed",Toast.LENGTH_LONG).show();
+    private fun customizeActionView(menu: Menu?) {
+        if (menu == null)
+            return
+        setExpansionCloseListenerToMenuItem(menu)
+        setButtonClickCallbackToMenuItem(menu)
+    }
+
+    private fun setButtonClickCallbackToMenuItem(menu: Menu) {
+        var menuItem = menu?.findItem(R.id.menu_item_1)
+        if(menuItem == null)
+            return
+        var actionProvider = MenuItemCompat.getActionProvider(menuItem) as CustomActionProvider
+        if (actionProvider != null) {
+            actionProvider.iActionViewButtonClick = object : IActionViewButtonClick {
+                override fun onButtonClick(buttonName: String) {
+                    Toast.makeText(applicationContext, buttonName + "clicked", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
             }
-            R.id.menu_item_2->{
-                Toast.makeText(applicationContext,"Menu item 2 pressed",Toast.LENGTH_LONG).show();
-            }
-            else->{}
         }
-        return true
     }
 
+    private fun setExpansionCloseListenerToMenuItem(menu: Menu) {
+        val expandListener = object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(p0: MenuItem): Boolean {
+                changeOtherMenuItemVisibility(menu, false)
+                return true
+            }
+            override fun onMenuItemActionCollapse(p0: MenuItem): Boolean {
+                changeOtherMenuItemVisibility(menu, true)
+                return true
+            }
+        }
+        menu?.findItem(R.id.menu_item_1)?.setOnActionExpandListener(expandListener);
+    }
+
+    private fun changeOtherMenuItemVisibility(menu: Menu, isVisible: Boolean) {
+        var idOfMenuItemWithCustomView :Int = R.id.menu_item_1
+        for (i in 0 until menu.size()) {
+            var menuItem = menu.getItem(i);
+            if (menuItem.itemId != idOfMenuItemWithCustomView)
+                menuItem.isVisible = isVisible
+        }
+    }
 
 
 }
